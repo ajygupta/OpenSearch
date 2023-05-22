@@ -31,11 +31,10 @@
 
 package org.opensearch.gateway;
 
-import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.opensearch.BaseExceptionsHelper;
 import org.opensearch.OpenSearchTimeoutException;
-import org.opensearch.ExceptionsHelper;
 import org.opensearch.action.ActionListener;
 import org.opensearch.action.FailedNodeException;
 import org.opensearch.action.support.nodes.BaseNodeResponse;
@@ -252,7 +251,7 @@ public abstract class AsyncShardFetch<T extends BaseNodeResponse> implements Rel
                         );
                     } else if (nodeEntry.isFailed() == false) {
                         // if the entry is there, for the right fetching round and not marked as failed already, process it
-                        Throwable unwrappedCause = ExceptionsHelper.unwrapCause(failure.getCause());
+                        Throwable unwrappedCause = BaseExceptionsHelper.unwrapCause(failure.getCause());
                         // if the request got rejected or timed out, we need to try it again next time...
                         if (unwrappedCause instanceof OpenSearchRejectedExecutionException
                             || unwrappedCause instanceof ReceiveTimeoutTransportException
@@ -295,8 +294,7 @@ public abstract class AsyncShardFetch<T extends BaseNodeResponse> implements Rel
      */
     private void fillShardCacheWithDataNodes(Map<String, NodeEntry<T>> shardCache, DiscoveryNodes nodes) {
         // verify that all current data nodes are there
-        for (ObjectObjectCursor<String, DiscoveryNode> cursor : nodes.getDataNodes()) {
-            DiscoveryNode node = cursor.value;
+        for (final DiscoveryNode node : nodes.getDataNodes().values()) {
             if (shardCache.containsKey(node.getId()) == false) {
                 shardCache.put(node.getId(), new NodeEntry<T>(node.getId()));
             }

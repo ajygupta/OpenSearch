@@ -38,10 +38,10 @@ import org.opensearch.cluster.metadata.WeightedRoutingMetadata;
 import org.opensearch.cluster.node.DiscoveryNodes;
 import org.opensearch.cluster.routing.allocation.decider.AwarenessAllocationDecider;
 import org.opensearch.common.Nullable;
-import org.opensearch.common.Strings;
 import org.opensearch.common.settings.ClusterSettings;
 import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Settings;
+import org.opensearch.core.common.Strings;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.index.shard.ShardId;
 import org.opensearch.node.ResponseCollectorService;
@@ -342,6 +342,14 @@ public class OperationRouting {
                     return indexShard.preferNodeActiveInitializingShardsIt(nodesIds);
                 case LOCAL:
                     return indexShard.preferNodeActiveInitializingShardsIt(Collections.singleton(localNodeId));
+                case PRIMARY:
+                    return indexShard.primaryActiveInitializingShardIt();
+                case REPLICA:
+                    return indexShard.replicaActiveInitializingShardIt();
+                case PRIMARY_FIRST:
+                    return indexShard.primaryFirstActiveInitializingShardsIt();
+                case REPLICA_FIRST:
+                    return indexShard.replicaFirstActiveInitializingShardsIt();
                 case ONLY_LOCAL:
                     return indexShard.onlyNodeActiveInitializingShardsIt(localNodeId);
                 case ONLY_NODES:

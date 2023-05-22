@@ -40,15 +40,7 @@ import org.opensearch.OpenSearchException;
 import org.opensearch.action.ActionListener;
 import org.opensearch.action.ActionRunnable;
 import org.opensearch.action.OriginalIndices;
-import org.opensearch.action.search.DeletePitInfo;
-import org.opensearch.action.search.DeletePitResponse;
-import org.opensearch.action.search.ListPitInfo;
-import org.opensearch.action.search.PitSearchContextIdForNode;
-import org.opensearch.action.search.SearchRequest;
-import org.opensearch.action.search.SearchShardTask;
-import org.opensearch.action.search.SearchType;
-import org.opensearch.action.search.UpdatePitContextRequest;
-import org.opensearch.action.search.UpdatePitContextResponse;
+import org.opensearch.action.search.*;
 import org.opensearch.action.support.TransportActions;
 import org.opensearch.cluster.ClusterState;
 import org.opensearch.cluster.service.ClusterService;
@@ -69,8 +61,8 @@ import org.opensearch.common.util.BigArrays;
 import org.opensearch.common.util.CollectionUtils;
 import org.opensearch.common.util.concurrent.ConcurrentCollections;
 import org.opensearch.common.util.concurrent.ConcurrentMapLong;
-import org.opensearch.core.concurrency.OpenSearchRejectedExecutionException;
 import org.opensearch.common.util.io.IOUtils;
+import org.opensearch.core.concurrency.OpenSearchRejectedExecutionException;
 import org.opensearch.index.Index;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.index.IndexService;
@@ -324,7 +316,6 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
             circuitBreakerService.getBreaker(CircuitBreaker.REQUEST)
         );
         this.indexSearcherExecutor = indexSearcherExecutor;
-
         TimeValue keepAliveInterval = KEEPALIVE_INTERVAL_SETTING.get(settings);
         setKeepAlives(DEFAULT_KEEPALIVE_SETTING.get(settings), MAX_KEEPALIVE_SETTING.get(settings));
         setPitKeepAlives(DEFAULT_KEEPALIVE_SETTING.get(settings), MAX_PIT_KEEPALIVE_SETTING.get(settings));
@@ -951,18 +942,18 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
     /**
      * This method returns all active PIT reader contexts
      */
-    public List<ListPitInfo> getAllPITReaderContexts() {
+
+    public List<ListPitInfo> getAllPITReaderContexts(PitService pitService) {
         final List<ListPitInfo> pitContextsInfo = new ArrayList<>();
         for (ReaderContext ctx : activeReaders.values()) {
             if (ctx instanceof PitReaderContext) {
                 final PitReaderContext context = (PitReaderContext) ctx;
-                ListPitInfo pitInfo = new ListPitInfo(context.getPitId(), context.getCreationTime(), context.getKeepAlive());
+                ListPitInfo pitInfo = new ListPitInfo(context.getPitId(), context.getCreationTime(), context.getKeepAlive(), pitService.getIndicesForPitId(context.getPitId()));
                 pitContextsInfo.add(pitInfo);
             }
         }
         return pitContextsInfo;
     }
-
     final SearchContext createContext(
         ReaderContext readerContext,
         ShardSearchRequest request,
